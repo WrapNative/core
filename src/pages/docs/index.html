@@ -1,0 +1,41 @@
+<template class="wn-actions">
+    <button id="btn-docs-search" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800"><i class="ph ph-magnifying-glass text-xl"></i></button>
+</template>
+<div class="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-900 rounded-lg mb-6">
+    <p class="text-yellow-800 dark:text-yellow-200 text-sm"><i class="ph ph-info mr-1"></i>There is no PTR option on this screen.</p>
+</div>
+
+<h3 class="font-bold mb-2">How to create HTML subroutes</h3>
+<div class="mb-6 p-4 bg-gray-50 dark:bg-zinc-900 rounded-lg border border-gray-100 dark:border-zinc-800">
+    <p class="text-xs font-mono text-gray-600 dark:text-gray-400 mb-2">//1. Create the hidden screen</p>
+    <code class="text-xs font-mono text-indigo-600 dark:text-indigo-400 block mb-4" data-wn-selectable>
+        &lt;div id="my-route" data-wn-screen class="wn-hidden"&gt;<br>
+        &nbsp;&nbsp;...<br>
+        &lt;/div&gt;
+    </code>
+    
+    <p class="text-xs font-mono text-gray-600 dark:text-gray-400 mb-2">//2. Create the link</p>
+    <code class="text-xs font-mono text-indigo-600 dark:text-indigo-400 block" data-wn-selectable>
+        &lt;a href="#my-route" data-wn-link&gt;Ir&lt;/a&gt;
+    </code>
+</div>
+
+<h3 class="font-bold mb-2">API Reference</h3>
+<div class="space-y-2 font-mono text-xs">
+        <div class="bg-gray-100 dark:bg-zinc-900 p-3 rounded" data-wn-selectable>wrapnative.router.back()</div>
+        <div class="bg-gray-100 dark:bg-zinc-900 p-3 rounded" data-wn-selectable>data-wn-ptr (Ativa Refresh)</div>
+        <div class="bg-gray-100 dark:bg-zinc-900 p-3 rounded" data-wn-selectable>
+        <button onclick="wrapnative.ui.alert({ title: 'Olá', message: 'Alerta Nativo!' })" class="text-indigo-500 underline">
+            Alert Try
+        </button>
+        </div>
+</div>
+</div>
+
+<div id="react" data-wn-screen data-wn-title="Reactivity" class="wn-hidden min-h-full px-4">
+<p>Count:<span data-bind="count">0</span></p>
+<p>Hello, <span data-bind="user"></span>!</p>
+<input type="text" data-model="user" placeholder="Input your name" class="p-2 border rounded">
+<button id="count" class="flex-1 bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium">
+    Add Count
+</button>

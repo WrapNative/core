@@ -9,8 +9,6 @@ wrapnative.onReady(()=>{
         user:'Coder'// HTML: <p>Hello, <span data-bind="user">Coder</span>!</p>
     }); 
 
-   
-
     // 2. Event Delegate
     document.addEventListener('click', async (e) => {
         if(e.target.closest('#btn-docs-search')) {
@@ -39,11 +37,5 @@ wrapnative.onReady(()=>{
         store.count++
     });
 
-    document.addEventListener('wrapnative-refresh', () => {
-        wrapnative.ui.showWebToast('Atualizando dados...');
-        setTimeout(() => {
-            wrapnative.ui.completePTR();
-            wrapnative.ui.showWebToast('Concluído!');
-        }, 2000);
-    });
+  
 })
