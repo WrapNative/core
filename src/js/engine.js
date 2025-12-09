@@ -1,22 +1,22 @@
 /**
  * WrapNative Engine v1.0.0 (Alpha) 
 */
+  const internalState = {
+    preLoadedDynamicPageResources:{},
+    currentParams:'',
+    currentRoute: '',
+    history: [], 
+    isDark: false,
+    sidebarOpen: false,
+    defaultTitle: document.title,
+    ptrLoading: false,
+    activeModals: 0,
+    deferredPrompt: null,
+    isReady: false
+};
 
 (function(window) {
     'use strict';
-
-    const internalState = {
-        currentParams:'',
-        currentRoute: '',
-        history: [], 
-        isDark: false,
-        sidebarOpen: false,
-        defaultTitle: document.title,
-        ptrLoading: false,
-        activeModals: 0,
-        deferredPrompt: null,
-        isReady: false
-    };
 
     const $ = (selector) => {
         if (!selector || selector === '#' || selector.trim() === '') return null;
@@ -25,6 +25,88 @@
     };
     
     const $$ = (selector) => document.querySelectorAll(selector);
+
+
+    //-- UTILS --
+    const utils = {
+        urlRevoke:(element,uri)=> {
+            element.onload = () => {
+                URL.revokeObjectURL(uri); 
+        } 
+        },
+        loadDynamicFile: async (props,required = false) => {
+            const {page, fileName } = props
+            try{
+                
+                let fileRequest =  await fetch(`./src/pages/${page}/${fileName}`)
+
+                if(!fileRequest.ok && required) throw new Error(`Falha ao carregar: ${fileName}`);
+                
+                // 2. Detecta o tipo automaticamente pelo cabeçalho
+                const contentType = fileRequest.headers.get('content-type');
+                const contentText = await fileRequest.text()
+                let blobType;
+
+                if( contentText.length <= 0 || contentText.includes("Cannot GET") ){
+                return undefined
+                }
+
+                if(required && contentText.length <= 0 ){
+                    throw new Error(`Arquivo: ${fileName} requerido existe, mas esta vazio!`);
+                }
+                // 3. Lógica de Decisão (JS vs CSS)
+                else if (contentType && contentType.includes('javascript')) {
+                    
+                    // É JAVASCRIPT
+                    blobType = contentType.split(';')[0] //'application/javascript';
+                    
+                    // Adiciona o hack para aparecer nomeado no DevTools
+                    const scriptComSourceMap = contentText //+ `\n//# sourceURL=${fileName}`;
+                    const blob = new Blob([scriptComSourceMap], { type: blobType });
+                    if(contentText.length <= 0 ) throw new Error(`Arquivo: ${fileName} requerido existe, mas esta vazio!`);
+                    return URL.createObjectURL(blob);
+                    
+                } else if (contentType && contentType.includes('css')) {
+                    // É CSS
+                    blobType = 'text/css';
+            
+                    // CSS também suporta sourceURL, mas a sintaxe é ligeiramente diferente
+                    const cssComSourceMap = contentText //+ `\n/*# sourceURL=${fileName} */`;
+                    const blob = new Blob([cssComSourceMap], { type: blobType });
+                    return URL.createObjectURL(blob);
+                } 
+                else if (fileRequest && contentType && contentType.includes('html')) {
+                    return contentText
+                }
+                else {
+                    console.warn('Tipo de arquivo não suportado ou desconhecido:', contentType);
+                    return;
+                }
+                
+            }
+            catch(e){
+                console.error(e)
+            } 
+        },
+        getContentPage: async (pageName) => {
+            try
+            {
+                let pageContent =  await utils.loadDynamicFile({page: pageName, fileName: `index.html`},true)
+                let cssContent =  await utils.loadDynamicFile({page: pageName, fileName: "style.css"})
+                let scriptContent =  await utils.loadDynamicFile({page: pageName, fileName:`script.js` })
+
+                return {
+                    html:pageContent,
+                    css:cssContent,
+                    js: scriptContent
+                }
+            }
+            catch(e)
+            {
+                console.warn(e)
+            }
+        }
+    }
 
     // --- BRIDGE ---
     const bridge = {
@@ -94,42 +176,44 @@
 
     // --- STATE MANAGER ---
     const stateManager = {
-        reactive: (initialData) => {
-                const proxy = new Proxy(initialData, {
-                    set(target, key, value) {
-                        target[key] = value;
-                        
-                        // Atualiza Textos (data-bind)
-                        $$('[data-bind="' + key + '"]').forEach(el => { 
-                            el.innerText = value; 
-                        });
-                        
-                        // Atualiza Inputs (data-model)
-                        $$('[data-model="' + key + '"]').forEach(el => { 
-                            if (el.value !== value) el.value = value; 
-                        });
-                        
-                        // Atualiza Visibilidade (data-if)
-                        $$('[data-if="' + key + '"]').forEach(el => {
-                            if (value) el.classList.remove('wn-hidden');
-                            else el.classList.add('wn-hidden');
-                        });
-                        return true;
-                    }
-                });
+        reactive: (data={}) => {
 
-                // Renderização Inicial (IMPORTANTE)
-                Object.keys(initialData).forEach(key => {
-                    const value = initialData[key];
+                // Função auxiliar para atualizar a UI
+                const updateUI = (key, value) => {
                     $$('[data-bind="' + key + '"]').forEach(el => { el.innerText = value; });
                     $$('[data-model="' + key + '"]').forEach(el => { if (el.value !== value) el.value = value; });
                     $$('[data-if="' + key + '"]').forEach(el => {
                         if (value) el.classList.remove('wn-hidden');
                         else el.classList.add('wn-hidden');
                     });
+                };
+
+                // 1. MERGE STRATEGY: Se já existe store, mescla os dados e retorna a existente
+                if (internalState.activeStore) {
+                    Object.keys(data).forEach(key => {
+                        // Adiciona/Atualiza a chave no Proxy existente
+                       internalState.activeStore[key] = data[key];
+                        // Força a atualização visual inicial para a nova página
+                        updateUI(key, data[key]);
+                    });
+                    return internalState.activeStore;
+                }
+
+                 // 2. CREATE STRATEGY: Se não existe, cria o Proxy Singleton
+                const proxy = new Proxy(data, {
+                    set(target, key, value) {
+                        target[key] = value;
+                        updateUI(key, value);
+                        return true;
+                    }
                 });
 
-                // Registra store global para acesso dos eventos
+                // Renderização Inicial (IMPORTANTE)
+                Object.keys(data).forEach(key => {
+                    updateUI(key, data[key]);
+                });
+
+                // Registra store global única
                 internalState.activeStore = proxy;
                 return proxy;
             }
@@ -137,11 +221,44 @@
 
     // --- ROUTER ---
     const router_v1 = {
-        init: () => {
+        init: async () => {
             document.documentElement.style.setProperty('--wn-safe-top', 'env(safe-area-inset-top, 0px)');
             document.documentElement.style.setProperty('--wn-safe-bottom', 'env(safe-area-inset-bottom, 0px)');
 
             const screens = $$('[data-wn-screen]');
+
+           // Lista de IDs que costumam dar problema (AdBlockers ou Globais)
+            const DANGEROUS_IDS = ['react', 'vue', 'angular', 'ad', 'ads', 'banner', 'track', 'tracker', 'pixel', 'popup', 'social'];
+
+            // --- DETECTOR DE ERROS (Segurança) ---
+            const idMap = {};
+
+
+            const loadPromises = Array.from(screens).map(async screen => {
+
+                 // 1. Checa Duplicatas
+                if (idMap[screen.id]) {
+                    console.error(`🔴 WrapNative Error: DUPLICATE SCREEN ID! The Screen '${screen.id}' exists more than once.`);
+                    screen.style.border = "5px solid red"; 
+                }
+                idMap[screen.id] = true;
+
+                // 2. Checa IDs Perigosos (Novo!)
+                if (DANGEROUS_IDS.includes(screen.id.toLowerCase())) {
+                    console.warn(`⚠️ WrapNative Warning: The ID '${screen.id}' is risky! It may be hidden by AdBlockers or conflict with browser extensions. We recommend renaming.`);
+                }
+                
+                let dynamicPageResources = await utils.getContentPage(screen.id);
+                
+                if (dynamicPageResources) {
+                    internalState.preLoadedDynamicPageResources[screen.id] = dynamicPageResources;
+                    screen.innerHTML = dynamicPageResources.html;
+                }
+            });
+
+            // O código vai PAUSAR aqui até todos os arquivos .html/.js/.css serem baixados
+            await Promise.all(loadPromises); 
+
             let startRoute = '';
             
             screens.forEach(s => {
@@ -179,6 +296,7 @@
         },
 
         navigate: async (screenId, animate = true, pushToHistory = true) => {
+
             if (!screenId) return;
             const oldScreen = internalState.currentRoute ? $('#' + internalState.currentRoute) : null;
             const newScreen = $('#' + screenId);
@@ -208,6 +326,32 @@
             const backBtn = $('#wn-back-btn');
             const menuBtn = $('#wn-menu-btn');
 
+            internalState.currentRoute = screenId;
+
+            const JS = internalState.preLoadedDynamicPageResources[screenId].js
+            const CSS = internalState.preLoadedDynamicPageResources[screenId].css
+
+            document.querySelectorAll('[data="dynamic-resource"]').forEach(element => {
+                element.remove(); 
+            });
+
+            if(CSS)
+            {
+                let linkElement = document.createElement('link')
+                linkElement.rel = 'stylesheet'
+                linkElement.setAttribute('data','dynamic-resource')
+                linkElement.href = CSS
+                document.head.appendChild(linkElement)
+            }
+
+            if(JS)
+            {
+                let jsElement = document.createElement('script')
+                jsElement.setAttribute('data','dynamic-resource')
+                jsElement.src = JS
+                document.body.appendChild(jsElement)
+            }
+
             if(toolbarEl) {
                 if(titleEl) titleEl.innerText = title;
                 
@@ -233,19 +377,19 @@
                 }
             }
 
-            if (animate && oldScreen) {
+            if (animate && oldScreen) 
+            {
                 if (document.startViewTransition && !window.matchMedia('(prefers-reduced-motion)').matches) {
                     document.startViewTransition(() => _swap(oldScreen, newScreen));
                 } else {
                     _swap(oldScreen, newScreen);
                 }
-            } else {
+            } 
+            else 
+            {
                 if(oldScreen) oldScreen.classList.add('wn-hidden');
                 newScreen.classList.remove('wn-hidden');
             }
-
-            internalState.currentRoute = screenId;
-            
             $$('.wn-nav-item').forEach(el => {
                 const isActive = el.getAttribute('href') === '#' + screenId;
                 el.classList.toggle('wn-active', isActive);
@@ -261,203 +405,10 @@
         }
     };
 
-     // --- ROUTER V2 (Hash & Params) ---
-    const router_v2 =  {
-        parseHash: () => {
-            const hash = window.location.hash.slice(1); 
-            const [path, queryString] = hash.split('?');
-            const query = {};
-            if (queryString) {
-                new URLSearchParams(queryString).forEach((val, key) => query[key] = val);
-            }
-            return { path: path || '', query };
-        },
-
-        init: () => {
-            document.documentElement.style.setProperty('--wn-safe-top', 'env(safe-area-inset-top, 0px)');
-            document.documentElement.style.setProperty('--wn-safe-bottom', 'env(safe-area-inset-bottom, 0px)');
-            
-            const screens = $$('[data-wn-screen]');
-            let startRoute = '';
-            
-            // 1. Verificar Hash Inicial
-            const { path, query } = router.parseHash();
-            
-            if (path && $('#' + path)) {
-                startRoute = path;
-                internalState.currentParams = query;
-            } else {
-                // Fallback para a primeira tela encontrada
-                screens.forEach(s => { if(!s.classList.contains('wn-hidden')) startRoute = s.id; else s.classList.add('wn-hidden'); });
-                if(!startRoute && screens.length > 0) { startRoute = screens[0].id; }
-            }
-
-            if (startRoute) {
-                router.render(startRoute, query, false);
-            }
-
-            // Listeners de Clique em Links
-            document.addEventListener('click', e => { 
-                const link = e.target.closest('[data-wn-link]'); 
-                if (link) { 
-                    e.preventDefault(); 
-                    const rawHref = link.getAttribute('href') || '';
-                    const href = rawHref.replace('#', '');
-                    const [routeId, queryStr] = href.split('?');
-                    const q = {};
-                    if(queryStr) new URLSearchParams(queryStr).forEach((v, k) => q[k] = v);
-                    
-                    router.navigate(routeId, q); 
-                } 
-            });
-            
-            // Listener do Botão Voltar do Navegador (Popstate)
-            window.addEventListener('popstate', () => {
-                const { path, query } = router.parseHash();
-                // Se houver um path válido no hash, renderiza ele.
-                // Se o path estiver vazio (ex: voltou pro root /), tenta achar a home.
-                if (path && $('#'+path)) {
-                    router.render(path, query, true); // true para animar a volta
-                } else if (!path) {
-                    // Voltou para a raiz sem hash, vamos para a tela inicial padrão
-                    const home = document.querySelector('[data-wn-screen]');
-                    if (home) router.render(home.id, {}, true);
-                }
-            });
-            
-            // Input Sync
-            document.addEventListener('input', e => { 
-                if (e.target.hasAttribute('data-model') && internalState.activeStore) { 
-                    internalState.activeStore[e.target.getAttribute('data-model')] = e.target.value; 
-                } 
-            });
-        },
-
-        render: (screenId, params = {}, animate = true) => {
-            const oldScreen = internalState.currentRoute ? $('#' + internalState.currentRoute) : null;
-            const newScreen = $('#' + screenId);
-            
-            if (!newScreen) return;
-            if (internalState.currentRoute === screenId && !animate) return;
-
-            internalState.currentParams = params;
-            internalState.currentRoute = screenId;
-
-            // Atualiza UI da Toolbar e Título
-            const title = newScreen.getAttribute('data-wn-title') || internalState.defaultTitle;
-            const toolbarMode = newScreen.getAttribute('data-wn-toolbar') || 'default';
-            const customActions = newScreen.querySelector('template.wn-actions');
-            const toolbarEl = $('#wn-main-toolbar');
-            const titleEl = $('#wn-toolbar-title');
-            const actionsEl = $('#wn-toolbar-actions');
-            const backBtn = $('#wn-back-btn');
-            const menuBtn = $('#wn-menu-btn');
-
-            const isRootTab = !!document.querySelector('.wn-nav-item[href="#' + screenId + '"]');
-
-            if(toolbarEl) {
-                if(titleEl) titleEl.innerText = title;
-                
-                // Lógica simples: se é aba raiz, mostra Menu. Se não, mostra Voltar.
-                if (isRootTab) {
-                     if(backBtn) backBtn.classList.add('hidden');
-                     if(menuBtn) menuBtn.classList.remove('hidden');
-                } else {
-                     if(backBtn) backBtn.classList.remove('hidden');
-                     if(menuBtn) menuBtn.classList.add('hidden');
-                }
-
-                if(actionsEl) { 
-                    actionsEl.innerHTML = ''; 
-                    if(customActions) actionsEl.appendChild(customActions.content.cloneNode(true)); 
-                }
-                
-                if (toolbarMode === 'hidden') { toolbarEl.classList.add('wn-hidden'); document.body.classList.remove('has-toolbar'); } 
-                else { toolbarEl.classList.remove('wn-hidden'); document.body.classList.add('has-toolbar'); }
-            }
-
-            // Animação de Troca
-            if (animate && oldScreen) {
-                if (document.startViewTransition && !window.matchMedia('(prefers-reduced-motion)').matches) {
-                    document.startViewTransition(() => _swap(oldScreen, newScreen));
-                } else {
-                    _swap(oldScreen, newScreen); 
-                }
-            } else {
-                if(oldScreen) oldScreen.classList.add('wn-hidden');
-                newScreen.classList.remove('wn-hidden');
-            }
-
-            // Atualiza Tabbar
-            $$('.wn-nav-item').forEach(el => {
-                const href = el.getAttribute('href').split('?')[0];
-                const isActive = href === '#' + screenId;
-                el.classList.toggle('wn-active', isActive);
-                el.classList.toggle('text-primary', isActive);
-                el.classList.toggle('text-slate-400', !isActive);
-            });
-            
-            window.scrollTo(0, 0);
-            
-            // Evento para o desenvolvedor
-            document.dispatchEvent(new CustomEvent('wrapnative-route', { detail: { id: screenId, params: params } }));
-        },
-
-        navigate: async (screenId, params = {}, animate = true) => {
-            if (!screenId) return;
-            if(internalState.sidebarOpen) ui.toggleSidebar(false);
-            if(animate) bridge.haptic('light');
-
-            const queryString = new URLSearchParams(params).toString();
-            const newHash = '#' + screenId + (queryString ? '?' + queryString : '');
-            
-            // Tenta usar pushState (melhor UX), com fallback para location.hash (Iframe safe)
-            try {
-                if (window.location.hash !== newHash) {
-                    history.pushState(null, '', newHash);
-                    // IMPORTANTE: pushState não dispara 'popstate' automaticamente, 
-                    // então chamamos render manualmente.
-                    router.render(screenId, params, animate);
-                } else {
-                    // Já estamos no hash, só renderiza se necessário
-                    router.render(screenId, params, animate);
-                }
-            } catch(e) {
-                console.warn('Nativify: PushState blocked (srcdoc/iframe detected). Using hash fallback.');
-                // Fallback: altera o hash diretamente. 
-                // Isso DISPARA o evento 'popstate'/'hashchange' em alguns browsers, 
-                // mas para garantir consistência, chamamos render também se não disparar.
-                window.location.hash = newHash;
-                // Pequeno delay para evitar race condition se o hashchange disparar
-                setTimeout(() => {
-                    if (internalState.currentRoute !== screenId) {
-                        router.render(screenId, params, animate);
-                    }
-                }, 10);
-            }
-        },
-
-        back: async () => {
-            // Tenta voltar no histórico do navegador
-            // Se o histórico for muito curto (ex: abriu o link direto), vai para home
-            if (window.history.length > 1) {
-                window.history.back();
-            } else {
-                const home = document.querySelector('[data-wn-screen]').id;
-                // Se já estiver na home, não faz nada
-                if (internalState.currentRoute !== home) {
-                    router.navigate(home, {}, true);
-                }
-            }
-        },
-
-        getParams: () => internalState.currentParams,
-        getQuery: (key) => internalState.currentParams[key]
-    };
-
     const router = router_v1
 
     function _swap(oldEl, newEl) {
+        // console.log(`página antiga:${oldEl.id} nova página: ${newEl.id}`)
         if(oldEl) oldEl.classList.add('wn-hidden');
         newEl.classList.remove('wn-hidden');
         window.scrollTo(0, 0);
@@ -721,63 +672,6 @@
             window.addEventListener('mousedown', (e) => onStart(e));
             window.addEventListener('mousemove', (e) => onMove(e.clientY, e));
             window.addEventListener('mouseup', (e) => onEnd(e.clientY));
-
-            // const spinner = document.createElement('div'); 
-            // spinner.className = 'wn-ptr-spinner';
-            // spinner.innerHTML = '<i class="ph ph-arrow-down wn-ptr-icon"></i><div class="wn-spinner-icon"></div>'; 
-            // document.body.appendChild(spinner);
-            
-            // let startY = 0; let currentY = 0; let activeScreen = null; let isDragging = false;
-            
-            // window.addEventListener('touchstart', (e) => {
-            //     if (internalState.activeModals > 0) return;
-            //     activeScreen = $('#' + internalState.currentRoute);
-            //     if (!activeScreen || !activeScreen.hasAttribute('data-wn-ptr')) { activeScreen = null; return; }
-            //     if (window.scrollY <= 1) { startY = e.touches[0].clientY; isDragging = true; spinner.style.transition = 'none'; }
-            // }, {passive: true});
-            
-            // window.addEventListener('touchmove', (e) => {
-            //     if (!isDragging || !activeScreen || internalState.activeModals > 0) return;
-            //     currentY = e.touches[0].clientY; const diff = currentY - startY;
-                
-            //     if (diff > 0 && window.scrollY <= 0) {
-            //         if(e.cancelable) e.preventDefault(); 
-                    
-            //         const translate = Math.min(diff * 0.4, 80); 
-            //         spinner.style.transform = 'translateY(' + translate + 'px)'; 
-            //         spinner.style.opacity = Math.min(translate / 50, 1);
-                    
-            //         const icon = spinner.querySelector('.wn-ptr-icon');
-            //         if(icon) {
-            //              if (diff > 60) icon.style.transform = 'rotate(180deg)';
-            //              else icon.style.transform = 'rotate(0deg)';
-            //         }
-            //     }
-            // }, {passive: false});
-            
-            // window.addEventListener('touchend', async (e) => {
-            //     if (!isDragging || !activeScreen) return; isDragging = false; const diff = currentY - startY;
-            //     if (diff > 60 && window.scrollY <= 0) {
-            //         internalState.ptrLoading = true; 
-            //         spinner.classList.add('wn-ptr-loading');
-            //         spinner.style.transform = 'translateY(60px)'; 
-            //         spinner.style.opacity = '1'; 
-            //         bridge.haptic('medium');
-            //         document.dispatchEvent(new CustomEvent('nativify-refresh', { detail: { screenId: internalState.currentRoute } }));
-            //         setTimeout(() => ui.completePTR(), 2000);
-            //     } else { ui.completePTR(); }
-            //     startY = 0; currentY = 0;
-            // });
-            
-            // ui.completePTR = () => {
-            //     internalState.ptrLoading = false; 
-            //     spinner.style.transition = 'all 0.3s ease';
-            //     spinner.style.transform = 'translateY(0px)'; 
-            //     spinner.style.opacity = '0'; 
-            //     spinner.classList.remove('wn-ptr-loading');
-            //     const icon = spinner.querySelector('.wn-ptr-icon');
-            //     if(icon) setTimeout(() => icon.style.transform = 'rotate(0deg)', 300);
-            // };
         },
 
         completePTR: () => {
@@ -870,14 +764,15 @@
         
     });
 
-    const init = () => {
+    const init = async () => {
+    
         // SAFE BOOT CHECK: Wait for body
         if (!document.body) {
             window.addEventListener('DOMContentLoaded', init);
             return;
         }
 
-        router.init(); ui.initTheme(); ui.initGestures(); ui.initPTR(); pwa.init();
+        await router.init(); ui.initTheme(); ui.initGestures(); ui.initPTR(); pwa.init();
         
         // CRITICAL: Signal readiness and Reveal Body
         internalState.isReady = true;
@@ -906,7 +801,6 @@
     // Expose to Global Scope
     window.wrapnative = wrapnative
     window.WN = wrapnative; // Alias
-    window.state = wrapnative.state;
     
 })(window);
 
