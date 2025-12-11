@@ -1,0 +1,27 @@
+{
+  "name": "wrapnative-core",
+  "version": "1.0.0",
+  "description": "<div align=\"center\">\r   <br />\r   <h1>📦 WrapNative Core</h1>\r   <p>\r     <strong>Turn any web project into a native-like PWA with zero build config.</strong>\r   </p>\r   <p>\r     <a href=\"https://github.com/WrapNative/core/blob/main/LICENSE\">\r       <img src=\"https://img.shields.io/badge/license-MIT-blue.svg\" alt=\"WrapNative is released under the MIT license.\" />\r     </a>\r     <img src=\"https://img.shields.io/badge/version-1.0.0--alpha-orange.svg\" alt=\"Current Version\" />\r     <img src=\"https://img.shields.io/badge/size-~20kb-green.svg\" alt=\"Gzipped Size\" />\r   </p>\r </div>",
+  "main": "./dist/wrapnative.js",
+  "files": ["dist"],
+  "scripts": {
+    "dev": "vite",             
+    "build": "vite build",  
+    "preview": "vite preview" 
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WrapNative/core.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/WrapNative/core/issues"
+  },
+  "homepage": "https://github.com/WrapNative/core#readme",
+  "devDependencies": {
+    "vite": "^6.0.0"
+  }
+}

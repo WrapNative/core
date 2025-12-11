@@ -6,13 +6,13 @@
   </p>
   <p>
     <a href="https://github.com/WrapNative/core/blob/main/LICENSE">
-      <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="WrapNative is released under the MIT license." />
+      <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="WrapNative is released under the MIT license." />
     </a>
-    <img src="https://img.shields.io/badge/version-1.0.0--alpha-orange.svg" alt="Current Version" />
-    <img src="https://img.shields.io/badge/size-~20kb-green.svg" alt="Gzipped Size" />
+    <img src="https://img.shields.io/badge/version-1.0.0--alpha-orange?style=for-the-badge&logo=Gzip&logoColor=white" alt="Current Version" />
+    <img src="https://img.shields.io/badge/Gzip-~20KB-green?style=for-the-badge&logo=Gzip&logoColor=white" alt="Gzipped Size " />
+    <img src="https://img.shields.io/badge/Vite-Build-646CFF?style=for-the-badge&logo=vite&logoColor=white" />
   </p>
 </div>
-
 <br />
 
 ## 📜 The Manifesto
@@ -72,6 +72,59 @@ If you navigate to a screen that is not in the main Tabbar, the system treats it
 - Displays a Back Button in the Toolbar automatically.
 - Enables the physical "Back" gesture on Android.
 
+**Router:**
+```JavaScript
+
+// Navigate programmatically
+wrapnative.router.navigate('home');
+```
+## ⚡ Dynamic Routing and Lifecycle
+
+WrapNative has simplified how screens and resources are loaded. The framework now automatically detects whether you need to fetch remote HTML or should simply hydrate an existing screen, based on the container's content.
+
+### Expected Folder Structure
+Keep your files organized in: `pages/{screen_name}/` (index.html, style.css, script.js).
+
+### Loading Rules
+
+#### 1. Dynamic HTML (lazy model)
+If the `data-wn-screen` element is **empty** (no children), the framework automatically means it should fetch the `index.html` template from the corresponding folder.
+
+> **Note:** HTML is fetched and injected only **once** and is cached in the DOM for instant future navigation.
+
+2. HTML Estático (Inline)Se o elemento já possuir conteúdo, o framework ignora a busca do template e foca apenas nos recursos extras (CSS/JS).
+
+```HTML
+<div data-wn-screen="perfil" data-wn-dynamic-resource="js">
+    <h1>Meu Perfil</h1>
+    <input type="text" data-model="nome">
+</div>
+```
+
+Resource Management (data-wn-dynamic-resource) This attribute explicitly defines which auxiliary files should be loaded. Unlike HTML, these resources have a lifecycle: they are injected when entering the route and removed when leaving, ensuring scope isolation and performance.
+
+| Value       | Behavior                  |
+|-------------|---------------------------|
+|"css"        | Load/Remove style.css     |
+|"js"         | Execute/Clear script.js   |
+|"css \| js " | Load both                 |
+
+
+Use pipe Full example:
+
+```HTML
+<div data-wn-screen="dashboard" data-wn-dynamic-resource="css|js"></div>
+```
+
+```HTML
+<div data-wn-screen="details" data-wn-dynamic-resource="css"></div>
+```
+
+```html
+<div data-wn-screen="home" data-wn-dynamic-resource="js"></div>
+```
+
+
 ## Reactive State
 For dynamic UIs, use the built-in lightweight Proxy store.
 
@@ -93,31 +146,21 @@ const store = wrapnative.state.reactive({
 <div data-if="isLoading">Loading...</div>
 ```
 
+## 📱 UX & Gestures
+- Pull to Refresh: Add data-wn-ptr to your container and listen for the wrapnative-refresh event.
+
+- Swipe to Dismiss: Modals support the native iOS-like swipe-down gesture to close.
+
+- Smart PWA: The engine detects the OS:
+
+- Android: Captures beforeinstallprompt and shows a native banner.
+
+- iOS: Displays a Full Screen Modal with a visual install guide (Share -> Add to Home).
+
+
 
 ⚡ JavaScript API
 The wrapnative (or WN) global object gives you control over the engine.
-
-**Router:**
-```JavaScript
-
-// Navigate programmatically
-wrapnative.router.navigate('home');
-```
-**IMPORTANT!** 🚀 The Future: WrapNative Router v2.0 definitive (Under Development)
-
-The current version focuses on simplicity. We are already working hard on v2.0, which will be the framework's "Game Changer".
-
-The following structural improvements are planned for the next official version:
-
-Blob Resource Loading: Intelligent loading of CSS/JS via Blob for total scope isolation and memory cleanup.
-
-Folder Structure: Automatic mapping of routes to physical directories (e.g., /pages/home/index.js).
-
-Offline-First: Aggressive optimization for offline operation using the Blob architecture.
-
-Dynamic Routes: Support for Regex and advanced parameters (e.g., #/product/:id).
-
-This Alpha version is for testing ergonomics and native animations.
 
 **UI Toolkit:**
 ```JavaScript
@@ -148,17 +191,6 @@ const file = await wrapnative.bridge.camera();
 wrapnative.bridge.haptics('light'); // 'light', 'medium', 'heavy'
 
 ```
-
-## 📱 UX & Gestures
-- Pull to Refresh: Add data-wn-ptr to your container and listen for the wrapnative-refresh event.
-
-- Swipe to Dismiss: Modals support the native iOS-like swipe-down gesture to close.
-
-- Smart PWA: The engine detects the OS:
-
-- Android: Captures beforeinstallprompt and shows a native banner.
-
-- iOS: Displays a Full Screen Modal with a visual install guide (Share -> Add to Home).
 
 
 ## 🛠️ Async & Loading Pattern:

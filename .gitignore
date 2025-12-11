@@ -1,0 +1,48 @@
+# --- Dependências (Nunca envie isso) ---
+node_modules/
+.pnpm-store/
+
+# --- Build de Produção (Vite/Rollup) ---
+# É aqui que seu framework final compilado vai ficar.
+# Não comitamos o dist, pois ele é gerado automaticamente.
+dist/
+dist-ssr/
+TODO.md
+
+# --- Arquivos de Log e Cache ---
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.vite/
+
+# --- Variáveis de Ambiente (SEGURANÇA CRÍTICA) ---
+# Como você vai ter um SaaS/Cloud, nunca suba suas chaves de API/Banco.
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# --- Sistema Operacional ---
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# --- IDEs (Configurações locais do seu editor) ---
+.vscode/
+.idea/
+*.suo
+*.ntvs
+*.njsproj
+*.sln
+*.sw?
+
+# --- Testes (Caso adicione Vitest/Jest no futuro) ---
+coverage/
+
+# --- Outros ---
+# Se você gerar arquivos temporários no seu script de build manual
+temp/

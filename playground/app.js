@@ -33,9 +33,9 @@ wrapnative.onReady(()=>{
         }
     });
     
-    document.getElementById('count').addEventListener('click', () => {
-        store.count++
-    });
+    // document.getElementById('count').addEventListener('click', () => {
+    //     store.count++
+    // });
 
   
 })

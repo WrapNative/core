@@ -30,15 +30,16 @@
     //-- UTILS --
     const utils = {
         urlRevoke:(element,uri)=> {
-            element.onload = () => {
-                URL.revokeObjectURL(uri); 
-        } 
+                element.onload = () => {
+                    URL.revokeObjectURL(uri); 
+            } 
         },
+
         loadDynamicFile: async (props,required = false) => {
             const {page, fileName } = props
             try{
                 
-                let fileRequest =  await fetch(`./src/pages/${page}/${fileName}`)
+                let fileRequest =  await fetch(`./pages/${page}/${fileName}`)
 
                 if(!fileRequest.ok && required) throw new Error(`Falha ao carregar: ${fileName}`);
                 
@@ -88,6 +89,7 @@
                 console.error(e)
             } 
         },
+
         getContentPage: async (pageName) => {
             try
             {

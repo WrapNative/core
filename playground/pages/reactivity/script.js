@@ -1,7 +1,7 @@
 wrapnative.onReady( async ()=> {
 
     const store = wrapnative.state.reactive({
-        user:{},
+        user:{ name:'marcos'},
         livro: { title: 'Java', year: 2009 }
     }); 
 
@@ -10,4 +10,5 @@ wrapnative.onReady( async ()=> {
 
     document.getElementById('increment').addEventListener('click',increment)
     document.getElementById('decrement').addEventListener('click',decrement)
+
 })

@@ -24,6 +24,16 @@ interface WrapNativeAlertOptions {
     buttons?: WrapNativeAlertButton[];
 }
 
+
+interface IUtils {
+    $(selector:string): ?Element
+    $$(selector:string): NodeList<Element>
+    _swap(oldEL:Element,newEl:HTMLElement) : void
+    urlRevoke(): Promise<string | undefined>
+    getContentPage(): Promise<{ html:?string, css:?string, js:?string}> | undefined
+    loadDynamicFile(): Promise<string | undefined>
+}
+
 /**
  * Gerenciador de Rotas e Navegação SPA.
  */
@@ -181,7 +191,7 @@ interface WrapNativeEngine {
 }
 
 // Declaração global para uso sem importação
-declare const wrapNative: WrapNativeEngine;
+declare const wrapnative: WrapNativeEngine;
 
 // Extensão da interface Window
 interface Window {
