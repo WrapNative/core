@@ -248,9 +248,10 @@ export function createUiManager (internalState , utils){
                     spinner.style.opacity = '1'; 
                     // Dispatch Custom Event
                     document.dispatchEvent(new CustomEvent('wrapnative-refresh'));
-                } else { 
-                    wrapnative.ui.completePTR(); 
-                }
+                } 
+                // else { 
+                //     wrapnative.ui.completePTR(); 
+                // }
                 startY = 0;
             };
 

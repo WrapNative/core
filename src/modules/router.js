@@ -16,8 +16,7 @@ export function createRouter(internalState, bridge,utils) {
 
             // --- DETECTOR DE ERROS (Segurança) ---
             const idMap = {};
-
-            const loadPromises = Array.from(screens).map(async screen => {
+            const loadPromises = Array.from(screens).map(async (screen,index) => {
         
                 if(!(screen instanceof HTMLDivElement)) throw new Error("Don't screen finded, screen need be a DIV ELEMENT")
                
@@ -37,14 +36,13 @@ export function createRouter(internalState, bridge,utils) {
                     let dynamicResource = (screen.dataset.wnDynamicResource ?  screen.dataset.wnDynamicResource.trim() : "").split('|')
                     if(screen.children.length === 0 )  dynamicResource.push('html')
                     let dynamicPageResources = await getContentPage( screenName,dynamicResource.filter(c => c.length >= 2 ).join("|"));
-                    internalState.loadedDynamicResources[screenName]=dynamicPageResources
+                    internalState.loadedDynamicResources[screenName] = dynamicPageResources
                     if(screen.children.length === 0 ) screen.innerHTML = dynamicPageResources.html;
                 }
             });
 
-            // O código vai PAUSAR aqui até todos os arquivos .html/.js/.css serem baixados
-            await Promise.all(loadPromises); 
-
+            await Promise.all(loadPromises);
+          
             let startRoute = '';
             
             screens.forEach(s => {
@@ -83,7 +81,7 @@ export function createRouter(internalState, bridge,utils) {
 
         navigate: async (screenId, animate = true, pushToHistory = true) => {
 
-            if (!screenId) return;
+            if (!screenId ) return;
             const oldScreen = internalState.currentRoute ? $('#' + internalState.currentRoute) : null;
             const newScreen = $('#' + screenId);
 

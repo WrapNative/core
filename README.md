@@ -2,14 +2,15 @@
   <br />
   <h1>📦 WrapNative Core</h1>
   <p>
-    <strong>Turn any web project into a native-like PWA with zero build config.</strong>
+    <strong>Turn any web project into a native-like PWA with zero build config.</strong></br>
+ <strong>Fullstack PWA Engine in under 8kB</strong> (Routing, Global State, and Hardware Bridge in less than 8kB of transfer).
   </p>
   <p>
     <a href="https://github.com/WrapNative/core/blob/main/LICENSE">
       <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="WrapNative is released under the MIT license." />
     </a>
     <img src="https://img.shields.io/badge/version-1.0.0--alpha-orange?style=for-the-badge&logo=Gzip&logoColor=white" alt="Current Version" />
-    <img src="https://img.shields.io/badge/Gzip-~20KB-green?style=for-the-badge&logo=Gzip&logoColor=white" alt="Gzipped Size " />
+    <img src="https://img.shields.io/badge/Gzip-~8KB-green?style=for-the-badge&logo=Gzip&logoColor=white" alt="Gzipped Size " />
     <img src="https://img.shields.io/badge/Vite-Build-646CFF?style=for-the-badge&logo=vite&logoColor=white" />
   </p>
 </div>

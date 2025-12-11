@@ -36,6 +36,9 @@ wrapnative.onReady(()=>{
     // document.getElementById('count').addEventListener('click', () => {
     //     store.count++
     // });
-
-  
+    document.addEventListener('wrapnative-refresh',async ()=>{
+        console.log('teste')
+        
+    })
+    
 })

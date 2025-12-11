@@ -4,13 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Meu App Incrível</title>
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link rel="manifest" href="./manifest.json">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>tailwind.config = { darkMode: 'class', theme: { extend: { colors: { primary: '#4f46e5' } } } }</script>
-    
-   <link rel="preload" href="./core.css" as="style">
+    <link rel="preload" href="./core.css" as="style">
+    <link rel="preload" href="./assets/icons.css" as="style">
+    <link rel="stylesheet" href="./assets/icons.css" >
     <link rel="stylesheet" href="./core.css" >
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script async>tailwind.config = { darkMode: 'class', theme: { extend: { colors: { primary: '#4f46e5' } } } }</script>
 </head>
 <body class="h-full antialiased selection:bg-indigo-100 selection:text-indigo-700 bg-white dark:bg-black text-gray-900 dark:text-white has-toolbar">
 
@@ -35,50 +36,7 @@
     <main class="w-full">
         <!-- MAIN-ROUTE :-->
         <div data-wn-screen="home" data-wn-dynamic-resource = "css|js" data-wn-title="Home" data-wn-ptr class="min-h-full fade-in px-4">
-            <div class="bg-gradient-to-br from-primary/10 to-transparent p-6 rounded-2xl mb-6 border border-primary/10" style="">
-                <h2 class="text-xl font-bold mb-2 text-primary" style="color: #4f46e5">Wellcome!</h2>
-                <p class="opacity-70 text-sm mb-4">Test the PWA installation flow and sub-routes.</p>
-                <div class="flex gap-2">
-                <button onclick="wrapnative.ui.openModal('demoModal')" class="flex-1 bg-primary text-white px-4 py-2 rounded-lg text-sm font-medium shadow-lg shadow-primary/30">
-                    Modal
-                </button>
-
-                <!-- ALERT DEMO BUTTON (NEW) -->
-                <button id="btn-alert-demo" onclick="wrapnative.ui.alert({ title: 'Olá', message: 'Alerta Nativo!' })" class="flex-1 bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium">
-                    Alert
-                </button>
-                </div>
-
-                <!-- Link para Sub-rota -->
-                <button onclick="wrapnative.router.navigate('details')" class="mt-2 w-full bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium" style="margin-top: 8px;">
-                Go to Details
-                </button>
-                </div>
-                <h3 class="font-bold text-lg mb-4">Feed</h3>
-
-                <div class="bg-gray-50 dark:bg-zinc-900 p-4 rounded-xl mb-3 flex items-center gap-3 item-detail-trigger" data-wn-link href="#details">
-                <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-zinc-800"></div>
-                <div>
-                    <div class="font-bold text-sm">Feed Item 1</div>
-                    <div class="text-xs opacity-60">Touch to details </div>
-                </div>
-                </div>
-
-                <div class="bg-gray-50 dark:bg-zinc-900 p-4 rounded-xl mb-3 flex items-center gap-3 item-detail-trigger" data-wn-link href="#details">
-                <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-zinc-800"></div>
-                <div>
-                    <div class="font-bold text-sm">Feed Item 2</div>
-                    <div class="text-xs opacity-60">Touch to details </div>
-                </div>
-                </div>
-
-                <div class="bg-gray-50 dark:bg-zinc-900 p-4 rounded-xl mb-3 flex items-center gap-3 item-detail-trigger" data-wn-link href="#details">
-                <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-zinc-800"></div>
-                <div>
-                    <div class="font-bold text-sm">Feed Item 3</div>
-                    <div class="text-xs opacity-60">Touch to details </div>
-                </div>
-            </div>
+           
         </div>
         <div data-wn-screen="docs" data-wn-title="Doc. Previus" class="wn-hidden min-h-full px-4"></div>
         <div data-wn-screen="explore" data-wn-title="Explorer" data-wn-toolbar="hidden" class="wn-hidden min-h-full px-4"></div>
